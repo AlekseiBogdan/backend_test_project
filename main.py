@@ -44,6 +44,24 @@ script = """
 """
 
 
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: list[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+
+    async def send_personal_message(self, message: str, websocket: WebSocket):
+        await websocket.send_text(message)
+
+
+manager = ConnectionManager()
+
+
 @app.get('/{phrase}')
 async def get_msg():
     return HTMLResponse(script)
@@ -51,8 +69,9 @@ async def get_msg():
 
 @app.websocket("/ws/{phrase}")
 async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
+    await manager.connect(websocket)
     data = await websocket.receive_text()
-    await websocket.send_text(data.upper())
+    await manager.send_personal_message(data.upper(), websocket)
+    manager.disconnect(websocket)
     await websocket.close()
 
