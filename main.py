@@ -55,3 +55,4 @@ async def websocket_endpoint(websocket: WebSocket):
     data = await websocket.receive_text()
     await websocket.send_text(data.upper())
     await websocket.close()
+
